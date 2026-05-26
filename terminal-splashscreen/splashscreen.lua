@@ -51,49 +51,38 @@ local function drawBackground()
 end
 
 local function drawDebugText()
-    local windowSize = ui.windowSize()
-    local loadingCanvas ---@type ui.ExtraCanvas
+	local status = loading.status()
+	local details = loading.details()
 
-    if not loadingCanvas or loadingCanvas:size().x ~= windowSize.x then
-        loadingCanvas = ui.ExtraCanvas(vec2(windowSize.x, windowSize.y))
-    end
+	if status and status ~= log.lastStatus and status ~= '' then
+		if log.lastStatus ~= '' then
+			table.insert(log.lines, '')
+		end
 
-    loadingCanvas:clear(rgbm.colors.transparent):update(function()
-        local status = loading.status()
-        local details = loading.details()
-
-        if status and status ~= log.lastStatus and status ~= '' then
-            if log.lastStatus ~= '' then
-                table.insert(log.lines, '')
-            end
-
-            log.lastStatus = status
-            if details and details ~= log.lastString and details ~= '' then
-                log.lastString = details
-                table.insert(log.lines, status)
-                table.insert(log.lines, '\t' .. details)
-            else
-                table.insert(log.lines, status)
-            end
-        else
-            if details and details ~= log.lastString and details ~= '' then
-                log.lastString = details
-                table.insert(log.lines, '\t' .. details)
-            end
-        end
-    end)
+		log.lastStatus = status
+		if details and details ~= log.lastString and details ~= '' then
+			log.lastString = details
+			table.insert(log.lines, status)
+			table.insert(log.lines, '\t' .. details)
+		else
+			table.insert(log.lines, status)
+		end
+	else
+		if details and details ~= log.lastString and details ~= '' then
+			log.lastString = details
+			table.insert(log.lines, '\t' .. details)
+		end
+	end
 
     ui.pushDWriteFont(font.regular)
     local detailsFontSize = scale(12)
-    local maxLines = math.floor((windowSize.y - 75) / ui.measureDWriteText('A', detailsFontSize).y)
+    local maxLines = math.floor((ui.windowSize().y - 75) / ui.measureDWriteText('A', detailsFontSize).y)
     local startIndex = math.max(1, #log.lines - maxLines)
     local cutString = table.concat(log.lines, '\n', startIndex, #log.lines)
 
     ui.setCursor(vec2(scale(20), scale(20)))
     ui.dwriteText(cutString, detailsFontSize, colors[colorscheme].text)
     ui.popDWriteFont()
-
-    ui.drawImage(loadingCanvas, vec2(0, 0), loadingCanvas:size())
 end
 
 ---@param emptyChar string @Character that is the empty part of the progress bar.
